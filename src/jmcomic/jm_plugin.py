@@ -41,7 +41,8 @@ class JmOptionPlugin:
             return
 
         jm_log(
-            topic=f'plugin.{self.plugin_key}' + (f'.{topic}' if topic is not None else ''),
+            topic=f'plugin.{self.plugin_key}' +
+            (f'.{topic}' if topic is not None else ''),
             msg=msg
         )
 
@@ -183,14 +184,17 @@ class UsageLogPlugin(JmOptionPlugin):
         def warning():
             warning_msg_list = []
             if cpu_percent >= warning_cpu_percent:
-                warning_msg_list.append(f'进程占用cpu过高 ({cpu_percent}% >= {warning_cpu_percent}%)')
+                warning_msg_list.append(
+                    f'进程占用cpu过高 ({cpu_percent}% >= {warning_cpu_percent}%)')
 
             mem_percent = psutil.virtual_memory().percent
             if mem_percent >= warning_mem_percent:
-                warning_msg_list.append(f'系统内存占用过高 ({mem_percent}% >= {warning_mem_percent}%)')
+                warning_msg_list.append(
+                    f'系统内存占用过高 ({mem_percent}% >= {warning_mem_percent}%)')
 
             if thread_count >= warning_thread_count:
-                warning_msg_list.append(f'线程数过多 ({thread_count} >= {warning_thread_count})')
+                warning_msg_list.append(
+                    f'线程数过多 ({thread_count} >= {warning_thread_count})')
 
             if len(warning_msg_list) != 0:
                 warning_msg_list.insert(0, '硬件占用告警，占用过高可能导致系统卡死！')
@@ -302,12 +306,14 @@ class ZipPlugin(JmOptionPlugin):
         photo_dict = self.get_downloaded_photo(downloader, album, photo)
 
         if level == 'album':
-            zip_path = self.get_zip_path(album, None, filename_rule, suffix, zip_dir)
+            zip_path = self.get_zip_path(
+                album, None, filename_rule, suffix, zip_dir)
             self.zip_album(album, photo_dict, zip_path, path_to_delete)
 
         elif level == 'photo':
             for photo, image_list in photo_dict.items():
-                zip_path = self.get_zip_path(None, photo, filename_rule, suffix, zip_dir)
+                zip_path = self.get_zip_path(
+                    None, photo, filename_rule, suffix, zip_dir)
                 self.zip_photo(photo, image_list, zip_path, path_to_delete)
 
         else:
@@ -319,7 +325,8 @@ class ZipPlugin(JmOptionPlugin):
         return (
             downloader.download_success_dict[album]
             if album is not None  # after_album
-            else downloader.download_success_dict[photo.from_album]  # after_photo
+            # after_photo
+            else downloader.download_success_dict[photo.from_album]
         )
 
     def zip_photo(self, photo, image_list: list, zip_path: str, path_to_delete):
@@ -350,7 +357,8 @@ class ZipPlugin(JmOptionPlugin):
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as f:
             for photo in photo_dict.keys():
                 # 定位到章节所在文件夹
-                photo_dir = self.unified_path(self.option.decide_image_save_dir(photo))
+                photo_dir = self.unified_path(
+                    self.option.decide_image_save_dir(photo))
                 # 章节文件夹标记为删除
                 path_to_delete.append(photo_dir)
                 for file in files_of_dir(photo_dir):
@@ -418,7 +426,8 @@ class ImageSuffixFilterPlugin(JmOptionPlugin):
         if allowed_orig_suffix is None:
             return
 
-        allowed_suffix_set = set(fix_suffix(suffix) for suffix in allowed_orig_suffix)
+        allowed_suffix_set = set(fix_suffix(suffix)
+                                 for suffix in allowed_orig_suffix)
 
         option_decide_cache = self.option.decide_download_cache
 
@@ -446,7 +455,8 @@ class SendQQEmailPlugin(JmOptionPlugin):
                album=None,
                downloader=None,
                ) -> None:
-        self.require_param(msg_from and msg_to and password, '发件人、收件人、授权码都不能为空')
+        self.require_param(msg_from and msg_to and password,
+                           '发件人、收件人、授权码都不能为空')
 
         from common import EmailConfig
         econfig = EmailConfig(msg_from, msg_to, password)
@@ -538,7 +548,8 @@ class FavoriteFolderExportPlugin(JmOptionPlugin):
                zip_password=None,
                delete_original_file=False,
                ):
-        self.save_dir = os.path.abspath(save_dir if save_dir is not None else (os.getcwd() + '/export/'))
+        self.save_dir = os.path.abspath(
+            save_dir if save_dir is not None else (os.getcwd() + '/export/'))
         self.zip_enable = zip_enable
         self.zip_filepath = os.path.abspath(zip_filepath)
         self.zip_password = zip_password
@@ -571,7 +582,8 @@ class FavoriteFolderExportPlugin(JmOptionPlugin):
             return
 
         # 压缩导出的文件
-        self.require_param(self.zip_filepath, '如果开启zip，请指定zip_filepath参数（压缩文件保存路径）')
+        self.require_param(self.zip_filepath,
+                           '如果开启zip，请指定zip_filepath参数（压缩文件保存路径）')
 
         if self.zip_password is None:
             self.zip_folder_without_password(self.files, self.zip_filepath)
@@ -603,13 +615,15 @@ class FavoriteFolderExportPlugin(JmOptionPlugin):
 
     def save_folder_page_data_to_file(self, page_data: List[JmFavoritePage], fid: str, fname: str):
         from os import path
-        filepath = path.abspath(path.join(self.save_dir, fix_windir_name(f'【{fid}】{fname}.csv')))
+        filepath = path.abspath(
+            path.join(self.save_dir, fix_windir_name(f'【{fid}】{fname}.csv')))
 
         data = []
         for page in page_data:
             for aid, extra in page.content:
                 data.append(
-                    (aid, extra.get('author', '') or JmModuleConfig.DEFAULT_AUTHOR, extra['name'])
+                    (aid, extra.get('author', '')
+                     or JmModuleConfig.DEFAULT_AUTHOR, extra['name'])
                 )
 
         if len(data) == 0:
@@ -704,8 +718,8 @@ class ConvertJpgToPdfPlugin(JmOptionPlugin):
         # 生成命令
         def generate_cmd():
             return (
-                    override_cmd or
-                    'magick convert -quality {quality} "{photo_dir}*{suffix}" "{pdf_filepath}"'
+                override_cmd or
+                'magick convert -quality {quality} "{photo_dir}*{suffix}" "{pdf_filepath}"'
             ).format(
                 quality=quality,
                 photo_dir=photo_dir,
@@ -734,7 +748,8 @@ class ConvertJpgToPdfPlugin(JmOptionPlugin):
                 for path, image in downloader.download_success_dict[photo.from_album][photo]
             ]
 
-            paths.append(self.option.decide_image_save_dir(photo, ensure_exists=False))
+            paths.append(self.option.decide_image_save_dir(
+                photo, ensure_exists=False))
             self.execute_deletion(paths)
 
 
@@ -771,7 +786,8 @@ class Img2pdfPlugin(JmOptionPlugin):
         pdf_filepath = os.path.join(pdf_dir, f'{filename}.pdf')
 
         # 调用 img2pdf 把 photo_dir 下的所有图片转为pdf
-        img_path_ls, img_dir_ls = self.write_img_2_pdf(pdf_filepath, album, photo)
+        img_path_ls, img_dir_ls = self.write_img_2_pdf(
+            pdf_filepath, album, photo)
         self.log(f'Convert Successfully: JM{album or photo} → {pdf_filepath}')
 
         # 执行删除
@@ -784,20 +800,30 @@ class Img2pdfPlugin(JmOptionPlugin):
         if album is None:
             img_dir_ls = [self.option.decide_image_save_dir(photo)]
         else:
-            img_dir_ls = [self.option.decide_image_save_dir(photo) for photo in album]
+            img_dir_ls = [self.option.decide_image_save_dir(
+                photo) for photo in album]
 
-        img_path_ls = []
-
+        optimized_imgs = []
         for img_dir in img_dir_ls:
             imgs = files_of_dir(img_dir)
             if not imgs:
                 continue
-            img_path_ls += imgs
+            optimized_imgs += imgs
+        self.create_pdf(optimized_imgs,pdf_filepath)
+        return optimized_imgs, img_dir_ls
 
-        with open(pdf_filepath, 'wb') as f:
-            f.write(img2pdf.convert(img_path_ls))
-
-        return img_path_ls, img_dir_ls
+    def create_pdf(self,imgs,out_file_path):
+        from PIL import Image
+        import os
+        os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
+        sources = []
+        output = Image.open(imgs[0])
+        for file in imgs[1:]:
+            jpg_file = Image.open(file)
+            if jpg_file.mode == "RGB":
+                jpg_file = jpg_file.convert("RGB")
+            sources.append(jpg_file)
+        output.save(out_file_path, "pdf", save_all=True, append_images=sources)
 
     @staticmethod
     def ensure_make_pdf_dir(pdf_dir: str):
@@ -853,10 +879,12 @@ class LongImgPlugin(JmOptionPlugin):
         if album is None:
             img_dir_items = [self.option.decide_image_save_dir(photo)]
         else:
-            img_dir_items = [self.option.decide_image_save_dir(photo) for photo in album]
+            img_dir_items = [self.option.decide_image_save_dir(
+                photo) for photo in album]
 
         img_paths = itertools.chain(*map(files_of_dir, img_dir_items))
-        img_paths = filter(lambda x: not x.startswith('.'), img_paths)  # 过滤系统文件
+        img_paths = filter(lambda x: not x.startswith('.'),
+                           img_paths)  # 过滤系统文件
 
         images = self.open_images(img_paths)
 
@@ -961,7 +989,8 @@ class JmServerPlugin(JmOptionPlugin):
             # 源代码仓库：https://github.com/hect0x7/plugin-jm-server
             try:
                 import plugin_jm_server
-                self.log(f'当前使用plugin_jm_server版本: {plugin_jm_server.__version__}')
+                self.log(
+                    f'当前使用plugin_jm_server版本: {plugin_jm_server.__version__}')
             except ImportError:
                 self.warning_lib_not_install('plugin_jm_server')
                 return
@@ -970,7 +999,8 @@ class JmServerPlugin(JmOptionPlugin):
             def blocking_run_server():
                 self.server_thread = current_thread()
                 self.enter_wait_list()
-                server = plugin_jm_server.JmServer(base_dir, password, **kwargs)
+                server = plugin_jm_server.JmServer(
+                    base_dir, password, **kwargs)
                 # run方法会阻塞当前线程直到flask退出
                 server.run(**run)
 
@@ -989,7 +1019,8 @@ class JmServerPlugin(JmOptionPlugin):
 
             else:
                 # 非debug模式，开新线程启动
-                threading.Thread(target=blocking_run_server, daemon=True).start()
+                threading.Thread(target=blocking_run_server,
+                                 daemon=True).start()
                 atexit_register(self.wait_server_stop)
                 self.running = True
 
@@ -1064,7 +1095,8 @@ class SubscribeAlbumUpdatePlugin(JmOptionPlugin):
         for album_id, photo_id in album_photo_dict.copy().items():
             # check update
             try:
-                has_update, photo_new_list = self.check_photo_update(album_id, photo_id)
+                has_update, photo_new_list = self.check_photo_update(
+                    album_id, photo_id)
             except JmcomicException as e:
                 self.log('Exception happened: ' + str(e), 'check_update.error')
                 continue
@@ -1120,7 +1152,8 @@ class SkipPhotoWithFewImagesPlugin(JmOptionPlugin):
                ):
         self.try_mark_photo_skip_and_log(photo, at_least_image_count)
         if image is not None:
-            self.try_mark_photo_skip_and_log(image.from_photo, at_least_image_count)
+            self.try_mark_photo_skip_and_log(
+                image.from_photo, at_least_image_count)
 
     def try_mark_photo_skip_and_log(self, photo: JmPhotoDetail, at_least_image_count: int):
         if photo is None:
